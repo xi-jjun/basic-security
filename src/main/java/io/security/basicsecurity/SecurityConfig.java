@@ -8,10 +8,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 @Configuration
@@ -52,5 +55,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					}
 				}).permitAll() // login page 는 인증이 없어도 들어갈 수 있어야 하기 때문에 => 인가 정책에서 '어떠한 요청' 에도 인증을 필수적으로 받게끔 설정했기 때문
 		;
+
+		http
+				.logout()
+				.logoutUrl("/logout") // default : /logout 원칙적으로 spring security 의 로그아웃은 post 방식이어야 한다. UI 의 속성과 일치해야 한다.
+				.logoutSuccessUrl("/login")
+				.addLogoutHandler(new LogoutHandler() {
+					@Override
+					public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+						HttpSession session = request.getSession();
+						session.invalidate();
+					}
+				})
+				.logoutSuccessHandler(new LogoutSuccessHandler() {
+					@Override
+					public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+						response.sendRedirect("/login");
+					}
+				})
+				.deleteCookies("remember-me")
+				;
 	}
 }
