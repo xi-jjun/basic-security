@@ -1,11 +1,13 @@
 package io.security.basicsecurity;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -20,6 +22,9 @@ import java.io.IOException;
 @Configuration
 @EnableWebSecurity // 여러 클래스를 import 하여 실행시키는 annotation. 이걸 명시해줘야 웹 보안이 활성화된다.
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+	@Autowired
+	private UserDetailsService userDetailsService;
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		/**
@@ -56,6 +61,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				}).permitAll() // login page 는 인증이 없어도 들어갈 수 있어야 하기 때문에 => 인가 정책에서 '어떠한 요청' 에도 인증을 필수적으로 받게끔 설정했기 때문
 		;
 
+		/**
+		 * logout 관련 설정
+		 */
 		http
 				.logout()
 				.logoutUrl("/logout") // default : /logout 원칙적으로 spring security 의 로그아웃은 post 방식이어야 한다. UI 의 속성과 일치해야 한다.
@@ -74,6 +82,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					}
 				})
 				.deleteCookies("remember-me")
-				;
+		;
+
+		/**
+		 * remember-me 관련 보안 설정
+		 */
+		http
+				.rememberMe()
+				.rememberMeParameter("remember") // default : remember-me
+				.tokenValiditySeconds(3600)
+				.userDetailsService(userDetailsService)
+		;
 	}
 }
